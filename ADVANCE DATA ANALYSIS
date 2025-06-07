@@ -1,0 +1,37 @@
+-- Window Function: Count customers per retailer
+SELECT Name, RetailerID,
+       COUNT(*) OVER (PARTITION BY RetailerID) AS TotalCustomers
+FROM Customer;
+
+-- Subquery: Customers with retailers having more than 1 customer
+SELECT * FROM Customer
+WHERE RetailerID IN (
+    SELECT RetailerID FROM Customer
+    GROUP BY RetailerID
+    HAVING COUNT(*) > 1
+);
+
+-- CTE: Average CustID per Retailer
+WITH AvgCust AS (
+    SELECT RetailerID, AVG(CustID) AS AvgCustID
+    FROM Customer
+    GROUP BY RetailerID
+)
+SELECT c.Name, c.RetailerID, a.AvgCustID
+FROM Customer c
+JOIN AvgCust a ON c.RetailerID = a.RetailerID;
+
+-- CTE: Valid vs Invalid Retailer Link
+WITH Status AS (
+    SELECT c.Name,
+           CASE WHEN r.RetailerName IS NULL THEN 'Invalid Retailer'
+                ELSE 'Valid Retailer' END AS Status
+    FROM Customer c
+    LEFT JOIN Retailer r ON c.RetailerID = r.RetailerID
+)
+SELECT Status, COUNT(*)
+FROM Status
+GROUP BY Status;
+
+
+
